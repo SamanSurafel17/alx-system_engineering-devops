@@ -1,38 +1,28 @@
 #!/usr/bin/env bash
-# Configure Nginx server to give error 404 page
+#script to installl and configure nginx
 apt-get update
-apt-get -y install nginx
-ufw allow 'Nginx HTTP'
-chmod -R 755 /var/www
-echo 'Hello World' > /var/www/html/index.html
-
-new_config=\
-"server {
-        listen 80 default_server;
-        listen [::]:80 default_server;
-               root /var/www/html;
-        index index.html index.htm index.nginx-debian.html;
-        server_name _;
-        location / {
-                try_files \$uri \$uri/ =404;
-        }
-        error_page 404 /404.html;
-        location  /404.html {
-            internal;
-        }
-        
-        if (\$request_filename ~ redirect_me){
-            rewrite ^ https://www.youtube.com/watch?v=QH2-TGUlwu4 permanent;
-        }
+apt-get install -y nginx
+mkdir -p /var/www/errors
+echo "Ceci n'est pas une page"> /var/www/errors/custom_404.html
+mkdir -p /var/www/html
+touch /var/www/html/index.html
+echo "Hello World!" > /var/www/html/index.html
+echo "" > /etc/nginx/sites-available/default
+cat <<END>> /etc/nginx/sites-available/default
+server {
+	listen   80 default_server;
+	listen   [::]:80 default_server;
+	root     /var/www/html;
+	index    index.html index.htm;
+	location /redirect_me {
+		return 301 https://www.youtube.com;
+	}
+	error_page 404 /custom_404.html;
+	location = /custom_404.html {
+		root /var/www/errors/;
+		internal;
+	}
+		
 }
-"
-echo "Ceci n'est pas une page" > /var/www/html/404.html
-
-echo "$new_config" > /etc/nginx/sites-available/default
-
-if [ "$(pgrep nginx)" -le 0 ];
-then
-    service nginx start
-else
-    service nginx restart
-fi;
+END
+service nginx restart

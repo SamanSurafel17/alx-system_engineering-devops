@@ -1,5 +1,41 @@
-# Install Nginx web server (w/ Puppet)
-exec { 'server configuration':
-  provider => shell,
-  command  => 'sudo apt-get -y update; sudo apt-get -y install nginx; echo "Hello World!" > /var/www/html/index.html; sudo sed -i "/server_name _;/a location /redirect_me {\\n\\treturn 301 https://google.com; listen 80; \\n\\t}\\n" /etc/nginx/sites-available/default; sudo service nginx restart'
+# configure new Server
+
+package { 'nginx':
+  ensure => 'installed',
+}
+$conf = "server {
+	listen   80 default_server;
+	listen   [::]:80 default_server;
+	root     /var/www/html;
+	index    index.html index.htm;
+	location /redirect_me {
+		return 301 https://www.youtube.com;
+	}
+	error_page 404 /custom_404.html;
+	location = /custom_404.html {
+		root /var/www/errors/;
+		internal;
+	}
+		
+}
+"
+
+file {'/etc/nginx/sites-available/default':
+  ensure  => 'present',
+  content => $conf
+}
+
+file { '/var/www/html/index.html':
+  ensure  => 'present',
+  content => 'Hello World!'
+}
+
+file { '/var/www/errors/custom_404.html':
+  ensure  => 'present',
+  content => "Ceci n\'est pas une page"
+}
+
+service {'nginx':
+  ensure  => running,
+  require => Package['nginx']
 }
