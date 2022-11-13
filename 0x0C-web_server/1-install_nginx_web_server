@@ -1,20 +1,16 @@
 #!/usr/bin/env bash
-#script to installl and configure nginx
-apt-get update
-apt-get install -y nginx
-echo "Hello World!" > /var/www/html/index.html
-echo "Resource not available" > /var/www/html/404.html
-cp /etc/nginx/sites-available/default /etc/nginx/sites-available/default.bak
+# installs nginx and configures it on a remote server
 
-printf %s "server {
+apt-get -y update
+apt-get -y install nginx
+ufw allow 'Nginx HTTP'
+echo 'Hello World!' > /var/www/html/index.nginx-debian.html
+cat <<END>> /etc/nginx/sites-available/default
+server {
 	listen   80 default_server;
 	listen   [::]:80 default_server;
 	root     /var/www/html;
 	index    index.html index.htm;
 }
-error_page 404/404.html;
-        location/404 {
-        root/var/www/html;
-        internal;}
->/etc/ngnix/sites-available/default
-service nginx restart
+END
+service nginx start
