@@ -1,25 +1,26 @@
 #!/usr/bin/python3
-'''
-A script to export data in the JSON format
-'''
+"""
+API CALL
+"""
 import json
 import requests
 
-if __name__ == '__main__':
-    url = "https://jsonplaceholder.typicode.com/users"
-    us = requests.get(url, verify=False).json()
-    undoc = {}
-    udoc = {}
-    for user in us:
-        uid = user.get("id")
-        udoc[uid] = []
-        undoc[uid] = user.get("username")
-    url = "https://jsonplaceholder.typicode.com/todos"
-    todo = requests.get(url, verify=False).json()
-    [udoc.get(t.get("userId")).append({"task": t.get("title"),
-                                       "completed": t.get("completed"),
-                                       "username": undoc.get(
-                                               t.get("userId"))})
-     for t in todo]
-    with open("todo_all_employees.json", 'w') as jsf:
-        json.dump(udoc, jsf)
+
+if __name__ == "__main__":
+    users = requests.get(
+        "https://jsonplaceholder.typicode.com/users").json()
+    tasks = requests.get(
+        "https://jsonplaceholder.typicode.com/todos").json()
+    with open("todo_all_employees.json", "w", encoding="utf-8") as f:
+        total = {}
+        for user in users:
+            userId = user.get("id")
+            username = user.get("username")
+            u = []
+            for task in tasks:
+                if task.get("userId") == userId:
+                    u.append({"task": task.get("title"),
+                              "completed": task.get("completed"),
+                              "username": username})
+            total[userId] = u
+        json.dump(total, f)
