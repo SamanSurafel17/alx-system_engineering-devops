@@ -1,40 +1,37 @@
 #!/usr/bin/python3
-"""
-Get title of top ten hot posts
-"""
+''' task 2 module'''
+
 import requests
 
 
-def count_words(subreddit, word_list=[], after="", res={}):
-    """ Recursively get data """
-    url = "https://www.reddit.com/r/{}/hot.json?limit=100&after={}".format(
-        subreddit, after)
-    headers = {"User-Agent": "Getacher-Top-Ten"}
-    try:
-        resp = requests.get(url, headers=headers, allow_redirects=False)
-        if resp.status_code != 200:
-            return
-        after = resp.json().get("data").get("after")
-        ch = resp.json().get("data").get("children")
-        keys = set([k.lower() for k in word_list])
-        for item in ch:
-            title = item.get("data").get("title").lower().split(" ")
-            for k in keys:
-                if res.get(k, None):
-                    res[k] += title.count(k)
+def count_words(subreddit, word_list, found_list=[], after=None):
+    '''return count of keywords in hot posts titles'''
+    user_agent = {'User-agent': 'test45'}
+    posts = requests.get('http://www.reddit.com/r/{}/hot.json?after={}'
+                         .format(subreddit, after), headers=user_agent)
+    if after is None:
+        word_list = [word.lower() for word in word_list]
+
+    if posts.status_code == 200:
+        posts = posts.json()['data']
+        aft = posts['after']
+        posts = posts['children']
+        for post in posts:
+            title = post['data']['title'].lower()
+            for word in title.split(' '):
+                if word in word_list:
+                    found_list.append(word)
+        if aft is not None:
+            count_words(subreddit, word_list, found_list, aft)
+        else:
+            result = {}
+            for word in found_list:
+                if word.lower() in result.keys():
+                    result[word.lower()] += 1
                 else:
-                    res[k] = title.count(k)
-        if not after:
-            i = 0
-            res = dict(sorted(res.items(), key=lambda x: (-x[1], x[0])))
-            for key, value in res.items():
-                if value:
-                    if i == 0:
-                        print("{}: {}".format(key, value), end="")
-                    else:
-                        print("\n{}: {}".format(key, value), end="")
-                i = i + 1
-            return
-    except Exception:
+                    result[word.lower()] = 1
+            for key, value in sorted(result.items(), key=lambda item: item[1],
+                                     reverse=True):
+                print('{}: {}'.format(key, value))
+    else:
         return
-    return count_words(subreddit, keys, after, res)
